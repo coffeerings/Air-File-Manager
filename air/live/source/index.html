@@ -1,0 +1,37 @@
+<html>
+	<head>
+		<title>Adobe Air Application</title>
+		<script src="javascript/AIRAliases.js" type="text/javascript" language="javascript"></script>
+		<script src="javascript/AIRSourceViewer.js" type="text/javascript" language="javascript"></script>
+		<script src="javascript/jquery.min.js" type="text/javascript" language="javascript"></script>
+		<script src="javascript/json2.js" type="text/javascript" language="javascript"></script>
+		<script src="javascript/application.js" type="text/javascript" language="javascript"></script>
+		<script src="swf/servicemonitor.swf" type="application/x-shockwave-flash"></script>
+		<link rel="stylesheet" href="stylesheets/application.css" type="text/css" />
+	</head>
+	<body>
+  	<h1>File Manager</h1>
+  	<div id="drop_zone">
+  		Drop your files here.
+  	</div>
+  	<p>Sync local files with your server</p>
+  	<button name="sync" id="sync">Sync with Server</button>
+  	<h2 class="cb">Directory Listing</h2>
+  	<table id="directory-listing">
+			<tr>
+				<td>File Path</td>
+				<td>Filename</td>
+				<td>File Size</td>
+			</tr>
+			<tbody>
+			</tbody>
+  	</table>
+  	<div id="preview-container">
+  		<h2>File Preview Pane</h2>
+  		<div id="file_preview_pane">
+  			Nothing to preview
+  		</div>
+  	</div>
+		<!--<input type="button" onclick="viewer.viewSource();" value="View Source" />-->
+	</body>
+</html>

@@ -1,0 +1,11 @@
+<application xmlns="http://ns.adobe.com/air/application/1.0">
+  <id>com.filesync.appname</id>
+  <version>1.0</version>
+  <filename>File Sync</filename>
+  <initialWindow>
+    <content>index.html</content>
+    <visible>true</visible>
+    <width>600</width>
+    <height>600</height>
+  </initialWindow>
+</application>
