@@ -14,22 +14,32 @@ var DEFAULT_LOCAL_DIR = 'AIR';
 // Member properties
 var monitor = null;
 var network_status = false;
-var files_online = new Array(); // todo: migrate logic to something more self contained
+var db_conn = null;
 
 /* initialise app */
 $(document).ready(function(){
-	do_load();
+	setup_monitor();	
+	setup_db();
+	
+	do_sync_down();
+	//do_sync_up(DEFAULT_LOCAL_DIR);
+	display_directory_listing(DEFAULT_LOCAL_DIR);
+	
+	//setInterval( "do_sync_down()", 15000 );
+	//setInterval( "do_sync_up(DEFAULT_LOCAL_DIR)", 10000 );
+	//setInterval( "display_directory_listing(DEFAULT_LOCAL_DIR)", 1000 );
+	
   $("#sync").click(function () { 
   	do_sync_down(); 
   });
 });
 
-function do_load(){
+function setup_monitor(){
 	monitor = new air.URLMonitor(new air.URLRequest(SERVICE_URL));
 	monitor.pollInterval = 500;
-	monitor.addEventListener( air.StatusEvent.STATUS, function(e){
+	monitor.addEventListener(air.StatusEvent.STATUS, function(e){
 		if(monitor.available){
-			air.trace('Network availible');
+			air.trace('Network available');
 			network_status = true;
 		}
 		else{
@@ -38,42 +48,33 @@ function do_load(){
 		}
 	});
 	monitor.start();
-	
-	var conn = new air.SQLConnection(); 
-	conn.addEventListener(air.SQLEvent.OPEN, function (e){ 
-		air.trace("the database was created successfully"); 
-	}); 
-	conn.addEventListener(air.SQLErrorEvent.ERROR, errorHandler); 
-	dbFile = air.File.applicationStorageDirectory.resolvePath(DATABASE_FILE); 
-	conn.openAsync(dbFile); 
-	
-	create_stmt = new air.SQLStatement(); 
-	create_stmt.sqlConnection = conn;  
-	create_stmt.text = "CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path TEXT, download_timestamp TEXT)";; 
-
-	create_stmt.addEventListener(air.SQLEvent.RESULT, function(){
-		air.trace("Table created"); 
-	}); 
-	create_stmt.addEventListener(air.SQLErrorEvent.ERROR, function(){
-		air.trace("Error message:", event.error.message); 
-    air.trace("Details:", event.error.details);
-	}); 
-
-	create_stmt.execute();
-	
-	
-	do_sync_down();
-	//do_sync_up(DEFAULT_LOCAL_DIR);
-	display_directory_listing(DEFAULT_LOCAL_DIR);
-	
-	//setInterval( "do_sync_down()", 15000 );
-	//setInterval( "do_sync_up(DEFAULT_LOCAL_DIR)", 10000 );
-	setInterval( "display_directory_listing(DEFAULT_LOCAL_DIR)", 1000 );
 }
 
-function errorHandler(event)	{ 
-    air.trace("Error message:", event.error.message); 
-    air.trace("Details:", event.error.details); 
+function setup_db(){
+	/* open connection */
+	conn = new air.SQLConnection(); 
+	conn.addEventListener(air.SQLEvent.OPEN, function(){
+		air.trace('Opened DB conn');
+	}); 
+	conn.addEventListener(air.SQLErrorEvent.ERROR, errorHandler);
+	db_file = air.File.applicationStorageDirectory.resolvePath(DATABASE_FILE); 
+	conn.openAsync(db_file);
+	air.trace(db_file.nativePath);
+	
+	/* create files table */
+	create_stmt = new air.SQLStatement(); 
+	create_stmt.sqlConnection = conn; 
+	create_stmt.text = "CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path TEXT, timestamp_downloaded TEXT, timestamp_modified TEXT)";
+	create_stmt.addEventListener(air.SQLEvent.RESULT, function(){
+		air.trace("Files table connected.");
+	}); 
+	create_stmt.addEventListener(air.SQLErrorEvent.ERROR, errorHandler); 
+	create_stmt.execute();
+}
+
+function errorHandler(event) { 
+	air.trace("Error message:", event.error.message); 
+	air.trace("Details:", event.error.details); 
 }
 
 function do_sync_down(){
@@ -82,7 +83,7 @@ function do_sync_down(){
 			var file_path = DEFAULT_LOCAL_DIR + '/' + item.file_path + '/' + item.file_name; item.file_path;
 			// check modifyied
 			file = air.File.documentsDirectory.resolvePath(file_path);
-			if(file.size != item.file_size){
+			//if(file.size != item.file_size){
 				var url_stream = new air.URLStream();
 
 				url_stream.addEventListener(air.Event.COMPLETE, function (event) {
@@ -95,12 +96,24 @@ function do_sync_down(){
 			    file_stream.writeBytes(file_data, 0, file_data.length); 
 			    file_stream.close(); 
 			    air.trace("The " + file_path + " file is written.");
+					
+					insert_stmt = new air.SQLStatement(); 
+					insert_stmt.sqlConnection = conn; 
+					insert_stmt.text = "INSERT INTO files (file_path, timestamp_downloaded, timestamp_modified) VALUES (:file_path, :timestamp_downloaded, :timestamp_modified)";
+					insert_stmt.parameters[":file_path"] = item.file_path; 
+					insert_stmt.parameters[":timestamp_downloaded"] = item.timestamp_downloaded;
+					insert_stmt.parameters[":timestamp_modified"] = item.timestamp_modified;
+					insert_stmt.addEventListener(air.SQLEvent.RESULT, function(){
+						air.trace("Record inserted into db");
+					}); 
+					insert_stmt.addEventListener(air.SQLErrorEvent.ERROR, errorHandler); 
+					insert_stmt.execute();
 				}); 
 				url_stream.load(new air.URLRequest(item.file_url));
-			}
+			/*}
 			else{
 				air.trace(file_path + ' all ok, not downloaded.');
-			}
+			}*/
 		});
 	});
 }
