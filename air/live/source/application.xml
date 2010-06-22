@@ -1,5 +1,5 @@
 <application xmlns="http://ns.adobe.com/air/application/1.0">
-  <id>com.example.appname</id>
+  <id>com.frogbox.appname</id>
   <version>1.0</version>
   <filename>File Sync</filename>
   <initialWindow>

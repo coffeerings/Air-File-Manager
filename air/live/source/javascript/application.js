@@ -8,7 +8,7 @@ var DATA_URL = 'http://air.localhost:8080/test.txt';
 var LIST_URL = 'http://air.localhost:8080/list.php';
 var UPLOAD_URL = 'http://air.localhost:8080/upload.php';
 var LOCAL_FILE = 'myfile.txt';
-var DATABASE_FILE = 'db/mydatabase.db';
+var DATABASE_FILE = 'application.db';
 var DEFAULT_LOCAL_DIR = 'AIR';
 
 // Member properties
@@ -26,7 +26,7 @@ $(document).ready(function(){
 	display_directory_listing(DEFAULT_LOCAL_DIR);
 	
 	//setInterval( "do_sync_down()", 15000 );
-	//setInterval( "do_sync_up(DEFAULT_LOCAL_DIR)", 10000 );
+	setInterval( "do_sync_up(DEFAULT_LOCAL_DIR)", 10000 );
 	//setInterval( "display_directory_listing(DEFAULT_LOCAL_DIR)", 1000 );
 	
   $("#sync").click(function () { 
@@ -59,7 +59,6 @@ function setup_db(){
 	conn.addEventListener(air.SQLErrorEvent.ERROR, errorHandler);
 	db_file = air.File.applicationStorageDirectory.resolvePath(DATABASE_FILE); 
 	conn.openAsync(db_file);
-	air.trace(db_file.nativePath);
 	
 	/* create files table */
 	create_stmt = new air.SQLStatement(); 
@@ -80,8 +79,8 @@ function errorHandler(event) {
 function do_sync_down(){
 	$.getJSON(LIST_URL, function(data) {
 		$.each(data, function(i,item){
-			var file_path = DEFAULT_LOCAL_DIR + '/' + item.file_path + '/' + item.file_name; item.file_path;
-			// check modifyied
+			var file_path = DEFAULT_LOCAL_DIR + '/' + item.file_path + '/' + item.file_name;
+			// check modified
 			file = air.File.documentsDirectory.resolvePath(file_path);
 			//if(file.size != item.file_size){
 				var url_stream = new air.URLStream();
